@@ -4,6 +4,10 @@
 typedef struct Node {
     int data;
     struct Node* next;
+    int connectedRight;
+    int connectedLeft;
+    int connectedFoward;
+    int connectedBehind;
 } Node;
 
 typedef struct Graph {
@@ -28,6 +32,10 @@ void addVertex(Graph* graph) {
 void addEdge(Graph* graph, int startVertex, int endVertex) {
     Node* newNode = (Node*)malloc(sizeof(Node));
     newNode->data = endVertex;
+    newNode->connectedRight = 0;
+    newNode->connectedLeft = 0;
+    newNode->connectedFoward = 0;
+    newNode->connectedBehind = 0;
     newNode->next = graph->vertices[startVertex];
     graph->vertices[startVertex] = newNode;
 }
@@ -35,10 +43,19 @@ void addEdge(Graph* graph, int startVertex, int endVertex) {
 void printGraph(Graph* graph) {
     for (int i = 0; i < graph->numVertices; i++) {
         Node* current = graph->vertices[i];
-        printf("Vertex %d: ", i);
+        printf("Vertex %d (Connected to): ", i);
 
         while (current != NULL) {
-            printf("%d -> ", current->data);
+            if (current->connectedRight)
+                printf("Right ");
+            if (current->connectedLeft)
+                printf("Left ");
+            if (current->connectedFoward)
+                printf("Foward ");
+            if (current->connectedBehind)
+                printf("Behind ");
+
+            printf("(%d) -> ", current->data);
             current = current->next;
         }
 
@@ -61,6 +78,8 @@ void decimalToBinary(Graph* maze, int decimal, int ratVertex) {
         addVertex(maze);
         addEdge(maze, ratVertex, maze->numVertices - 1);
         addEdge(maze, maze->numVertices - 1, ratVertex);
+        maze->vertices[ratVertex]->connectedFoward = 1;
+        maze->vertices[maze->numVertices - 1]->connectedBehind = 1;
     }
 
     // Right
@@ -68,6 +87,8 @@ void decimalToBinary(Graph* maze, int decimal, int ratVertex) {
         addVertex(maze);
         addEdge(maze, ratVertex, maze->numVertices - 1);
         addEdge(maze, maze->numVertices - 1, ratVertex);
+        maze->vertices[ratVertex]->connectedRight = 1;
+        maze->vertices[maze->numVertices - 1]->connectedLeft = 1;
     }
 
     // Left
@@ -75,6 +96,8 @@ void decimalToBinary(Graph* maze, int decimal, int ratVertex) {
         addVertex(maze);
         addEdge(maze, ratVertex, maze->numVertices - 1);
         addEdge(maze, maze->numVertices - 1, ratVertex);
+        maze->vertices[ratVertex]->connectedLeft = 1;
+        maze->vertices[maze->numVertices - 1]->connectedRight = 1;
     }
 
     // Behind
@@ -82,6 +105,8 @@ void decimalToBinary(Graph* maze, int decimal, int ratVertex) {
         addVertex(maze);
         addEdge(maze, ratVertex, maze->numVertices - 1);
         addEdge(maze, maze->numVertices - 1, ratVertex);
+        maze->vertices[ratVertex]->connectedBehind = 1;
+        maze->vertices[maze->numVertices - 1]->connectedFoward = 1;
     }
 }
 

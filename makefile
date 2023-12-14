@@ -8,10 +8,6 @@ run-grafo:
 	gcc -o exe grafo.c
 	./exe
 
-run-grafo2:
-	clear
-	gcc -o exe main2.c
-	./exe
 
 commit:
 	git add .
