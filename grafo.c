@@ -64,9 +64,16 @@ int main() {
     addVertex(myGraph);
 
     addEdge(myGraph, 0, 1);
+    addEdge(myGraph, 1, 0);
+
     addEdge(myGraph, 0, 3);
+    addEdge(myGraph, 3, 0);
+
     addEdge(myGraph, 1, 2);
+    addEdge(myGraph, 2, 1);
+
     addEdge(myGraph, 2, 3);
+    addEdge(myGraph, 3, 2);
 
     printGraph(myGraph);
 
