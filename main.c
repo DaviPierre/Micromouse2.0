@@ -13,7 +13,7 @@ typedef struct Node {
 typedef struct Graph {
     Node** vertices;
     int numVertices;
-} Graph; // deletar depois
+} Graph;
 
 Graph* createGraph() {
     Graph* graph = (Graph*)malloc(sizeof(Graph));
