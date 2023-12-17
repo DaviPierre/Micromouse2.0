@@ -10,6 +10,6 @@ run-grafo:
 
 
 commit:
-	git add main.c makefile
+	git add .
 	git commit -m "Commit automático DaviPierre"
 	git push
