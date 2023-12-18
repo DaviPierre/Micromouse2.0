@@ -16,8 +16,11 @@ typedef struct Graph
     Node **vertices;
     int numVertices;
     int ratVertex;
+    int numRotations;
 
 } Graph;
+
+// ---- COMEÇO DAS FUNÇÕES DE CRIAÇÃO DE GRAFOS ----
 
 Graph *createGraph()
 {
@@ -25,6 +28,7 @@ Graph *createGraph()
     graph->numVertices = 0;
     graph->vertices = NULL;
     graph->ratVertex = 0;
+    graph->numRotations = 0;
 
     return graph;
 }
@@ -76,25 +80,26 @@ void printGraph(Graph *graph)
         }
 
         printf("NULL\n");
-        printf("ratVertex = %d\n", graph->ratVertex);
+
     }
+
+    printf("ratVertex = %d\n", graph->ratVertex);
+    printf("numRotations = %d\n", graph->numRotations);
 }
 
-void decimalToBinary(Graph *maze, int decimal)
-{
-    int binary[4];
-    int i = 0;
+// ---- FIM DAS FUNÇÕES DE CRIAÇÃO DE GRAFOS
 
-    while (decimal > 0)
-    {
-        binary[i] = decimal % 2;
-        decimal = decimal / 2;
-        i++;
-    }
+// ---- COMEÇO DAS FUNÇÕES DE MOVIMENTAÇÃO DO RATO ----
+int onwardFoward(Graph* maze){
+    int result;
 
-    // Forward
-    if (binary[0] == 1)
+    printf("w");
+    scanf("%d", &result);
+
+    switch (result)
     {
+    case 1:
+
         addVertex(maze);
 
         addEdge(maze, maze->ratVertex, maze->numVertices - 1);
@@ -102,11 +107,45 @@ void decimalToBinary(Graph *maze, int decimal)
 
         maze->vertices[maze->ratVertex]->forward = maze->vertices[maze->numVertices - 1];
         maze->vertices[maze->numVertices - 1]->behind = maze->vertices[maze->ratVertex];
+        
+        maze->ratVertex = maze->numVertices - 1;
+
+        break;
+    
+    case 2:
+
+        addVertex(maze);
+
+        addEdge(maze, maze->ratVertex, maze->numVertices - 1);
+        addEdge(maze, maze->numVertices - 1, maze->ratVertex);
+
+        maze->vertices[maze->ratVertex]->forward = maze->vertices[maze->numVertices - 1];
+        maze->vertices[maze->numVertices - 1]->behind = maze->vertices[maze->ratVertex];
+        
+        maze->ratVertex = maze->numVertices - 1;
+
+        printf("QUEIJO VAIDO\n");
+
+        break;
+
+    default:
+        result = 0;
+        break;
     }
 
-    // Right
-    if (binary[1] == 1)
+    return result;
+}
+
+int onwardRight(Graph* maze){
+    int result;
+
+    printf("w");
+    scanf("%d", &result);
+
+    switch (result)
     {
+    case 1:
+
         addVertex(maze);
 
         addEdge(maze, maze->ratVertex, maze->numVertices - 1);
@@ -114,23 +153,45 @@ void decimalToBinary(Graph *maze, int decimal)
 
         maze->vertices[maze->ratVertex]->right = maze->vertices[maze->numVertices - 1];
         maze->vertices[maze->numVertices - 1]->left = maze->vertices[maze->ratVertex];
-    }
+        
+        maze->ratVertex = maze->numVertices - 1;
 
-    // Left
-    if (binary[2] == 1)
-    {
+        break;
+    
+    case 2:
+
         addVertex(maze);
 
         addEdge(maze, maze->ratVertex, maze->numVertices - 1);
         addEdge(maze, maze->numVertices - 1, maze->ratVertex);
 
-        maze->vertices[maze->ratVertex]->left = maze->vertices[maze->numVertices - 1];
-        maze->vertices[maze->numVertices - 1]->right = maze->vertices[maze->ratVertex];
+        maze->vertices[maze->ratVertex]->right = maze->vertices[maze->numVertices - 1];
+        maze->vertices[maze->numVertices - 1]->left = maze->vertices[maze->ratVertex];
+        
+        maze->ratVertex = maze->numVertices - 1;
+
+        printf("QUEIJO VAIDO\n");
+
+        break;
+
+    default:
+        result = 0;
+        break;
     }
 
-    // Behind
-    if (binary[3] == 1)
+    return result;
+}
+
+int onwardBehind(Graph* maze){
+    int result;
+
+    printf("w");
+    scanf("%d", &result);
+
+    switch (result)
     {
+    case 1:
+
         addVertex(maze);
 
         addEdge(maze, maze->ratVertex, maze->numVertices - 1);
@@ -138,94 +199,178 @@ void decimalToBinary(Graph *maze, int decimal)
 
         maze->vertices[maze->ratVertex]->behind = maze->vertices[maze->numVertices - 1];
         maze->vertices[maze->numVertices - 1]->forward = maze->vertices[maze->ratVertex];
+        
+        maze->ratVertex = maze->numVertices - 1;
+
+        break;
+    
+    case 2:
+
+        addVertex(maze);
+
+        addEdge(maze, maze->ratVertex, maze->numVertices - 1);
+        addEdge(maze, maze->numVertices - 1, maze->ratVertex);
+
+        maze->vertices[maze->ratVertex]->behind = maze->vertices[maze->numVertices - 1];
+        maze->vertices[maze->numVertices - 1]->forward = maze->vertices[maze->ratVertex];
+        
+        maze->ratVertex = maze->numVertices - 1;
+
+        printf("QUEIJO VAIDO\n");
+
+        break;
+
+    default:
+        result = 0;
+        break;
     }
+
+    return result;
 }
 
+int onwardLeft(Graph* maze){
+    int result;
 
+    printf("w");
+    scanf("%d", &result);
 
-void decision(Graph *maze, int result)
-{
-    Node *current = maze->vertices[maze->ratVertex];
-
-    // Verificar se pode mover para frente
-    if (current->forward != NULL)
+    switch (result)
     {
-        printf("w");
-        scanf("%d", &result);
+    case 1:
 
-        maze->ratVertex = current->forward->data;
+        addVertex(maze);
+
+        addEdge(maze, maze->ratVertex, maze->numVertices - 1);
+        addEdge(maze, maze->numVertices - 1, maze->ratVertex);
+
+        maze->vertices[maze->ratVertex]->left = maze->vertices[maze->numVertices - 1];
+        maze->vertices[maze->numVertices - 1]->right = maze->vertices[maze->ratVertex];
+        
+        maze->ratVertex = maze->numVertices - 1;
+
+        break;
+    
+    case 2:
+
+        addVertex(maze);
+
+        addEdge(maze, maze->ratVertex, maze->numVertices - 1);
+        addEdge(maze, maze->numVertices - 1, maze->ratVertex);
+
+        maze->vertices[maze->ratVertex]->left = maze->vertices[maze->numVertices - 1];
+        maze->vertices[maze->numVertices - 1]->right = maze->vertices[maze->ratVertex];
+        
+        maze->ratVertex = maze->numVertices - 1;
+
+        printf("QUEIJO VAIDO\n");
+
+        break;
+
+    default:
+        result = 0;
+        break;
     }
 
-    // Rotacionar para a direita
-    else if (current->right != NULL)
-    {
-        printf("r");
-        scanf("%d", &result);
-
-        printf("w");
-        scanf("%d", &result);
-
-        maze->ratVertex = current->right->data;
-
-        printf("l");
-        scanf("%d", &result);
-    }
-
-    // Rotacionar para a esquerda
-    else if (current->left != NULL)
-    {
-        printf("l");
-        scanf("%d", &result);
-
-        printf("w");
-        scanf("%d", &result);
-
-        maze->ratVertex = current->left->data;
-
-        printf("r");
-        scanf("%d", &result);
-    }
-
-    else
-    {
-        printf("r");
-        scanf("%d", &result);
-
-        printf("r");
-        scanf("%d", &result);
-
-        printf("w");
-        scanf("%d", &result);
-
-        maze->ratVertex = current->behind->data;
-
-        printf("l");
-        scanf("%d", &result);
-
-        printf("l");
-        scanf("%d", &result);
-    }
+    return result;
 }
 
+int rotateRight(Graph * maze){
+    int result;
 
+    printf("r");
+    scanf("%d", &result);
 
+    maze->numRotations++;
 
+    printGraph(maze);
+
+}
+
+// ---- FIM DAS FUNÇÕES DE MOVIMENTAÇÃO DO RATO ----
 
 int main()
 {
-    int result;
+    int result = 1, rotations = 0;
     Graph *maze = createGraph();
 
     addVertex(maze);
 
-    printf("c");
-    scanf("%d", &result);
+    while(result != 2){
 
-    decimalToBinary(maze, result);
-    printGraph(maze);
+        switch (rotations)
+        {
 
-    decision(maze, result);
-    printGraph(maze);
+        case 0:
+
+            printf("Chamou a função onwardFoward!\n");
+            result = onwardFoward(maze);
+
+            printGraph(maze);
+            
+            if(result == 0){
+                result = rotateRight(maze);
+                rotations = maze->numRotations;
+                rotations = rotations % 4;
+            }
+
+            printf("ROTATIONS: %d % 4 = %d\n ", maze->numRotations, rotations);
+
+            break;
+        
+        case 1:
+
+            printf("Chamou a função onwardRight!\n");
+            result = onwardRight(maze);
+
+            printGraph(maze);
+            
+            if(result == 0){
+                result = rotateRight(maze);
+                rotations = maze->numRotations;
+                rotations = rotations % 4;
+            }
+            printf("ROTATIONS: %d % 4 = %d\n ", maze->numRotations, rotations);
+
+            break;
+
+        case 2:
+
+            printf("Chamou a função onwardBehind!\n");
+            result = onwardBehind(maze);
+
+            printGraph(maze);
+            
+            if(result == 0){
+                result = rotateRight(maze);
+                rotations = maze->numRotations;
+                rotations = rotations % 4;
+            }
+            printf("ROTATIONS: %d % 4 = %d\n ", maze->numRotations, rotations);
+
+            break;
+
+        case 3:
+
+            printf("Chamou a função onwardLeft!\n");
+            result = onwardLeft(maze);
+
+            printGraph(maze);
+            
+            if(result == 0){
+                result = rotateRight(maze);
+                rotations = maze->numRotations;
+                rotations = rotations % 4;
+            }
+            printf("ROTATIONS: %d % 4 = %d\n ", maze->numRotations, rotations);
+
+            break;
+        }
+
+        
+
+    }
+
+
 
     return 0;
 }
