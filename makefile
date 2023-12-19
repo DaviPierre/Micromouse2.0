@@ -11,5 +11,6 @@ run-grafo:
 
 commit:
 	git add .
+	git status
 	git commit -m "Commit automático DaviPierre"
 	git push
