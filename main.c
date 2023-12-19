@@ -94,33 +94,6 @@ void printGraph(Graph *maze)
     printf("numRotations = %d\n", maze->numRotations);
 }
 
-void destroyNode(Graph *maze, Node *node)
-{
-    if (node != NULL)
-    {
-        // Atualiza as conexões de outros nós para remover referências ao nó a ser destruído
-        for (int i = 0; i < maze->numVertices; ++i)
-        {
-            if (maze->vertices[i] != NULL)
-            {
-                if (maze->vertices[i]->next == node)
-                    maze->vertices[i]->next = NULL;
-                if (maze->vertices[i]->forward == node)
-                    maze->vertices[i]->forward = NULL;
-                if (maze->vertices[i]->right == node)
-                    maze->vertices[i]->right = NULL;
-                if (maze->vertices[i]->left == node)
-                    maze->vertices[i]->left = NULL;
-                if (maze->vertices[i]->behind == node)
-                    maze->vertices[i]->behind = NULL;
-            }
-        }
-
-        // Libera a memória associada ao nó
-        free(node);
-    }
-}
-
 // ---- FIM DAS FUNÇÕES DE CRIAÇÃO DE GRAFOS ----
 
 // ---- COMEÇO DA LÓGICA DO LABIRINTO ----
@@ -156,31 +129,36 @@ void verifyCicle(Graph *maze, char action)
             switch (action)
             {
             case 'F':
-                destroyNode(maze, maze->vertices[maze->numVertices - 1]);
+                
                 maze->vertices[maze->ratVertex]->forward = maze->vertices[maze->vertices[i]->data];
                 maze->vertices[maze->vertices[i]->data]->behind = maze->vertices[maze->ratVertex];
-                maze->ratVertex = maze->vertices[i]->data;
+                maze->ratVertex = i;
+                // destroyNode(maze, maze->vertices[maze->numVertices - 1]);
                 break;
 
             case 'R':
-                destroyNode(maze, maze->vertices[maze->numVertices - 1]);
                 maze->vertices[maze->ratVertex]->right = maze->vertices[maze->vertices[i]->data];
                 maze->vertices[maze->vertices[i]->data]->left = maze->vertices[maze->ratVertex];
-                maze->ratVertex = maze->vertices[i]->data;
+                maze->ratVertex = i;
+                // destroyNode(maze, maze->vertices[maze->numVertices - 1]);
                 break;
 
             case 'B':
-                destroyNode(maze, maze->vertices[maze->numVertices - 1]);
                 maze->vertices[maze->ratVertex]->behind = maze->vertices[maze->vertices[i]->data];
                 maze->vertices[maze->vertices[i]->data]->forward = maze->vertices[maze->ratVertex];
-                maze->ratVertex = maze->vertices[i]->data;
+                maze->ratVertex = i;
+                // destroyNode(maze, maze->vertices[maze->numVertices - 1]);
                 break;
 
             case 'L':
-                destroyNode(maze, maze->vertices[maze->numVertices - 1]);
+                maze->vertices[maze->vertices[maze->ratVertex]->right->data]->left = NULL;
+                free(maze->vertices[maze->vertices[maze->ratVertex]->right->data]);
+                maze->numVertices--;
+                maze->vertices[maze->ratVertex]->right = NULL;
+
                 maze->vertices[maze->ratVertex]->left = maze->vertices[maze->vertices[i]->data];
                 maze->vertices[maze->vertices[i]->data]->right = maze->vertices[maze->ratVertex];
-                maze->ratVertex = maze->vertices[i]->data;
+                maze->ratVertex = i;
                 break;
 
             }
