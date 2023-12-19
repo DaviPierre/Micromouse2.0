@@ -37,14 +37,14 @@ Graph *createGraph()
     return graph;
 }
 
-void addVertex(Graph *graph)
+void addVertex(Graph *maze)
 {
-    graph->numVertices++;
-    graph->vertices = realloc(graph->vertices, graph->numVertices * sizeof(Node *));
-    graph->vertices[graph->numVertices - 1] = NULL;
+    maze->numVertices++;
+    maze->vertices = realloc(maze->vertices, maze->numVertices * sizeof(Node *));
+    maze->vertices[maze->numVertices - 1] = NULL;
 }
 
-void addEdge(Graph *graph, int startVertex, int endVertex)
+void addEdge(Graph *maze, int startVertex, int endVertex)
 {
     Node *newNode = (Node *)malloc(sizeof(Node));
 
@@ -53,15 +53,19 @@ void addEdge(Graph *graph, int startVertex, int endVertex)
     newNode->right = NULL;
     newNode->left = NULL;
     newNode->behind = NULL;
-    newNode->next = graph->vertices[startVertex];
-    graph->vertices[startVertex] = newNode;
+    newNode->x = 0;
+    newNode->y = 0;
+    newNode->next = maze->vertices[startVertex];
+    maze->vertices[startVertex] = newNode;
 }
 
-void printGraph(Graph *graph)
+void printGraph(Graph *maze)
 {
-    for (int i = 0; i < graph->numVertices; i++)
+    for (int i = 0; i < maze->numVertices; i++)
     {
-        Node *current = graph->vertices[i];
+        Node *current = maze->vertices[i];
+
+        printf("\n VEREDICT X = %d \n VEREDICT Y = %d\n", current->x, current->y);
 
         printf("Vertex %d (Connected to): ", i);
 
@@ -86,69 +90,112 @@ void printGraph(Graph *graph)
         printf("NULL\n");
     }
 
-    printf("ratVertex = %d\n", graph->ratVertex);
-    printf("numRotations = %d\n", graph->numRotations);
+    printf("ratVertex = %d\n", maze->ratVertex);
+    printf("numRotations = %d\n", maze->numRotations);
+}
+
+void destroyNode(Graph *maze, Node *node)
+{
+    if (node != NULL)
+    {
+        // Atualiza as conexões de outros nós para remover referências ao nó a ser destruído
+        for (int i = 0; i < maze->numVertices; ++i)
+        {
+            if (maze->vertices[i] != NULL)
+            {
+                if (maze->vertices[i]->next == node)
+                    maze->vertices[i]->next = NULL;
+                if (maze->vertices[i]->forward == node)
+                    maze->vertices[i]->forward = NULL;
+                if (maze->vertices[i]->right == node)
+                    maze->vertices[i]->right = NULL;
+                if (maze->vertices[i]->left == node)
+                    maze->vertices[i]->left = NULL;
+                if (maze->vertices[i]->behind == node)
+                    maze->vertices[i]->behind = NULL;
+            }
+        }
+
+        // Libera a memória associada ao nó
+        free(node);
+    }
 }
 
 // ---- FIM DAS FUNÇÕES DE CRIAÇÃO DE GRAFOS ----
 
 // ---- COMEÇO DA LÓGICA DO LABIRINTO ----
 
-int verifyCicle(Graph *maze, char action)
+void verifyCicle(Graph *maze, char action)
 {
+
+
     for (int i = 0; i < maze->numVertices; i++)
     {
-        bool veredict_x = false;
-        bool veredict_y = false;
-
         switch (action)
         {
         case 'F':
             maze->vertices[i]->x++;
-            if (maze->vertices[i]->x == 0)
-                veredict_x = true;
             break;
 
         case 'R':
             maze->vertices[i]->y++;
-            if (maze->vertices[i]->y == 0)
-                veredict_y = true;
             break;
 
         case 'B':
             maze->vertices[i]->x--;
-            if (maze->vertices[i]->x == 0)
-                veredict_x = true;
             break;
 
         case 'L':
             maze->vertices[i]->y--;
-            if (maze->vertices[i]->y == 0)
-                veredict_y = true;
-            break;
-
-        default:
-            // Handle the default case
-            veredict_x = false;
-            veredict_y = false;
             break;
         }
 
-        if (veredict_x && veredict_y)
+        if (maze->vertices[i]->x == 0 && maze->vertices[i]->y == 0)
         {
-            return maze->vertices[i]->data;
+
+            switch (action)
+            {
+            case 'F':
+                destroyNode(maze, maze->vertices[maze->numVertices - 1]);
+                maze->vertices[maze->ratVertex]->forward = maze->vertices[maze->vertices[i]->data];
+                maze->vertices[maze->vertices[i]->data]->behind = maze->vertices[maze->ratVertex];
+                maze->ratVertex = maze->vertices[i]->data;
+                break;
+
+            case 'R':
+                destroyNode(maze, maze->vertices[maze->numVertices - 1]);
+                maze->vertices[maze->ratVertex]->right = maze->vertices[maze->vertices[i]->data];
+                maze->vertices[maze->vertices[i]->data]->left = maze->vertices[maze->ratVertex];
+                maze->ratVertex = maze->vertices[i]->data;
+                break;
+
+            case 'B':
+                destroyNode(maze, maze->vertices[maze->numVertices - 1]);
+                maze->vertices[maze->ratVertex]->behind = maze->vertices[maze->vertices[i]->data];
+                maze->vertices[maze->vertices[i]->data]->forward = maze->vertices[maze->ratVertex];
+                maze->ratVertex = maze->vertices[i]->data;
+                break;
+
+            case 'L':
+                destroyNode(maze, maze->vertices[maze->numVertices - 1]);
+                maze->vertices[maze->ratVertex]->left = maze->vertices[maze->vertices[i]->data];
+                maze->vertices[maze->vertices[i]->data]->right = maze->vertices[maze->ratVertex];
+                maze->ratVertex = maze->vertices[i]->data;
+                break;
+
+            }
         }
     }
-
-    return 1000000000;
 }
+
+
 
 // ---- FIM DA LÓGICA DO LABIRINTO ----
 
 // ---- COMEÇO DAS FUNÇÕES DE MOVIMENTAÇÃO DO RATO ----
 int onwardFoward(Graph *maze)
 {
-    int result, verify = 1000000000;
+    int result;
 
     printf("w");
     scanf("%d", &result);
@@ -157,56 +204,30 @@ int onwardFoward(Graph *maze)
     {
     case 1:
 
-        verify = verifyCicle(maze, 'F');
+        addVertex(maze);
 
-        if (verify != 1000000000)
-        {
+        addEdge(maze, maze->ratVertex, maze->numVertices - 1);
+        addEdge(maze, maze->numVertices - 1, maze->ratVertex);
 
-            maze->vertices[maze->ratVertex]->forward = maze->vertices[verify];
-            maze->vertices[verify]->behind = maze->vertices[maze->ratVertex];
-            maze->ratVertex = verify;
-            return result;
-        }
-        else
-        {
+        maze->vertices[maze->ratVertex]->forward = maze->vertices[maze->numVertices - 1];
+        maze->vertices[maze->numVertices - 1]->behind = maze->vertices[maze->ratVertex];
 
-            addVertex(maze);
+        maze->ratVertex = maze->numVertices - 1;
 
-            addEdge(maze, maze->ratVertex, maze->numVertices - 1);
-            addEdge(maze, maze->numVertices - 1, maze->ratVertex);
-
-            maze->vertices[maze->ratVertex]->forward = maze->vertices[maze->numVertices - 1];
-            maze->vertices[maze->numVertices - 1]->behind = maze->vertices[maze->ratVertex];
-
-            maze->ratVertex = maze->numVertices - 1;
-        }
+        verifyCicle(maze, 'F');
         break;
 
     case 2:
 
-        verify = verifyCicle(maze, 'F');
+        addVertex(maze);
 
-        if (verify != 1000000000)
-        {
+        addEdge(maze, maze->ratVertex, maze->numVertices - 1);
+        addEdge(maze, maze->numVertices - 1, maze->ratVertex);
 
-            maze->vertices[maze->ratVertex]->forward = maze->vertices[verify];
-            maze->vertices[verify]->behind = maze->vertices[maze->ratVertex];
-            maze->ratVertex = verify;
-            return result;
-        }
-        else
-        {
+        maze->vertices[maze->ratVertex]->forward = maze->vertices[maze->numVertices - 1];
+        maze->vertices[maze->numVertices - 1]->behind = maze->vertices[maze->ratVertex];
 
-            addVertex(maze);
-
-            addEdge(maze, maze->ratVertex, maze->numVertices - 1);
-            addEdge(maze, maze->numVertices - 1, maze->ratVertex);
-
-            maze->vertices[maze->ratVertex]->forward = maze->vertices[maze->numVertices - 1];
-            maze->vertices[maze->numVertices - 1]->behind = maze->vertices[maze->ratVertex];
-
-            maze->ratVertex = maze->numVertices - 1;
-        }
+        maze->ratVertex = maze->numVertices - 1;
 
         printf("QUEIJO VAIDO\n");
 
@@ -222,7 +243,7 @@ int onwardFoward(Graph *maze)
 
 int onwardRight(Graph *maze)
 {
-    int result, verify;
+    int result;
 
     printf("w");
     scanf("%d", &result);
@@ -231,57 +252,32 @@ int onwardRight(Graph *maze)
     {
     case 1:
 
-        verify = verifyCicle(maze, 'R');
+        addVertex(maze);
 
-        if (verify != 1000000000)
-        {
+        addEdge(maze, maze->ratVertex, maze->numVertices - 1);
+        addEdge(maze, maze->numVertices - 1, maze->ratVertex);
 
-            maze->vertices[maze->ratVertex]->right = maze->vertices[verify];
-            maze->vertices[verify]->left = maze->vertices[maze->ratVertex];
-            maze->ratVertex = verify;
-            return result;
-        }
-        else
-        {
+        maze->vertices[maze->ratVertex]->right = maze->vertices[maze->numVertices - 1];
+        maze->vertices[maze->numVertices - 1]->left = maze->vertices[maze->ratVertex];
 
-            addVertex(maze);
+        maze->ratVertex = maze->numVertices - 1;
 
-            addEdge(maze, maze->ratVertex, maze->numVertices - 1);
-            addEdge(maze, maze->numVertices - 1, maze->ratVertex);
 
-            maze->vertices[maze->ratVertex]->right = maze->vertices[maze->numVertices - 1];
-            maze->vertices[maze->numVertices - 1]->left = maze->vertices[maze->ratVertex];
-
-            maze->ratVertex = maze->numVertices - 1;
-        }
-
+        verifyCicle(maze, 'R');
         break;
 
     case 2:
 
-        verify = verifyCicle(maze, 'F');
+        addVertex(maze);
 
-        if (verify != 1000000000)
-        {
+        addEdge(maze, maze->ratVertex, maze->numVertices - 1);
+        addEdge(maze, maze->numVertices - 1, maze->ratVertex);
 
-            maze->vertices[maze->ratVertex]->right = maze->vertices[verify];
-            maze->vertices[verify]->left = maze->vertices[maze->ratVertex];
-            maze->ratVertex = verify;
-            return result;
-        }
-        else
-        {
+        maze->vertices[maze->ratVertex]->right = maze->vertices[maze->numVertices - 1];
+        maze->vertices[maze->numVertices - 1]->left = maze->vertices[maze->ratVertex];
 
-            addVertex(maze);
+        maze->ratVertex = maze->numVertices - 1;
 
-            addEdge(maze, maze->ratVertex, maze->numVertices - 1);
-            addEdge(maze, maze->numVertices - 1, maze->ratVertex);
-
-            maze->vertices[maze->ratVertex]->right = maze->vertices[maze->numVertices - 1];
-            maze->vertices[maze->numVertices - 1]->left = maze->vertices[maze->ratVertex];
-
-            maze->ratVertex = maze->numVertices - 1;
-        }
 
         printf("QUEIJO VAIDO\n");
 
@@ -297,7 +293,7 @@ int onwardRight(Graph *maze)
 
 int onwardBehind(Graph *maze)
 {
-    int result, verify;
+    int result;
 
     printf("w");
     scanf("%d", &result);
@@ -305,58 +301,30 @@ int onwardBehind(Graph *maze)
     switch (result)
     {
     case 1:
+        addVertex(maze);
 
-        verify = verifyCicle(maze, 'B');
+        addEdge(maze, maze->ratVertex, maze->numVertices - 1);
+        addEdge(maze, maze->numVertices - 1, maze->ratVertex);
 
-        if (verify != 1000000000)
-        {
+        maze->vertices[maze->ratVertex]->forward = maze->vertices[maze->numVertices - 1];
+        maze->vertices[maze->numVertices - 1]->behind = maze->vertices[maze->ratVertex];
 
-            maze->vertices[maze->ratVertex]->behind = maze->vertices[verify];
-            maze->vertices[verify]->forward = maze->vertices[maze->ratVertex];
-            maze->ratVertex = verify;
-            return result;
-        }
-        else
-        {
+        maze->ratVertex = maze->numVertices - 1;
 
-            addVertex(maze);
-
-            addEdge(maze, maze->ratVertex, maze->numVertices - 1);
-            addEdge(maze, maze->numVertices - 1, maze->ratVertex);
-
-            maze->vertices[maze->ratVertex]->forward = maze->vertices[maze->numVertices - 1];
-            maze->vertices[maze->numVertices - 1]->behind = maze->vertices[maze->ratVertex];
-
-            maze->ratVertex = maze->numVertices - 1;
-        }
-
+        verifyCicle(maze, 'B');
         break;
 
     case 2:
 
-        verify = verifyCicle(maze, 'F');
+        addVertex(maze);
 
-        if (verify != 1000000000)
-        {
+        addEdge(maze, maze->ratVertex, maze->numVertices - 1);
+        addEdge(maze, maze->numVertices - 1, maze->ratVertex);
 
-            maze->vertices[maze->ratVertex]->behind = maze->vertices[verify];
-            maze->vertices[verify]->forward = maze->vertices[maze->ratVertex];
-            maze->ratVertex = verify;
-            return result;
-        }
-        else
-        {
+        maze->vertices[maze->ratVertex]->forward = maze->vertices[maze->numVertices - 1];
+        maze->vertices[maze->numVertices - 1]->behind = maze->vertices[maze->ratVertex];
 
-            addVertex(maze);
-
-            addEdge(maze, maze->ratVertex, maze->numVertices - 1);
-            addEdge(maze, maze->numVertices - 1, maze->ratVertex);
-
-            maze->vertices[maze->ratVertex]->forward = maze->vertices[maze->numVertices - 1];
-            maze->vertices[maze->numVertices - 1]->behind = maze->vertices[maze->ratVertex];
-
-            maze->ratVertex = maze->numVertices - 1;
-        }
+        maze->ratVertex = maze->numVertices - 1;
 
         printf("QUEIJO VAIDO\n");
 
@@ -372,7 +340,7 @@ int onwardBehind(Graph *maze)
 
 int onwardLeft(Graph *maze)
 {
-    int result, verify = 1000000000;
+    int result;
 
     printf("w");
     scanf("%d", &result);
@@ -381,56 +349,30 @@ int onwardLeft(Graph *maze)
     {
     case 1:
 
-        verify = verifyCicle(maze, 'L');
+        addVertex(maze);
 
-        if (verify != 1000000000)
-        {
+        addEdge(maze, maze->ratVertex, maze->numVertices - 1);
+        addEdge(maze, maze->numVertices - 1, maze->ratVertex);
 
-            maze->vertices[maze->ratVertex]->left = maze->vertices[verify];
-            maze->vertices[verify]->right = maze->vertices[maze->ratVertex];
-            maze->ratVertex = verify;
-            return result;
-        }
-        else
-        {
+        maze->vertices[maze->ratVertex]->left = maze->vertices[maze->numVertices - 1];
+        maze->vertices[maze->numVertices - 1]->right = maze->vertices[maze->ratVertex];
 
-            addVertex(maze);
+        maze->ratVertex = maze->numVertices - 1;
 
-            addEdge(maze, maze->ratVertex, maze->numVertices - 1);
-            addEdge(maze, maze->numVertices - 1, maze->ratVertex);
-
-            maze->vertices[maze->ratVertex]->left = maze->vertices[maze->numVertices - 1];
-            maze->vertices[maze->numVertices - 1]->right = maze->vertices[maze->ratVertex];
-
-            maze->ratVertex = maze->numVertices - 1;
-        }
+        verifyCicle(maze, 'L');
         break;
 
     case 2:
 
-        verify = verifyCicle(maze, 'L');
+        addVertex(maze);
 
-        if (verify != 1000000000)
-        {
+        addEdge(maze, maze->ratVertex, maze->numVertices - 1);
+        addEdge(maze, maze->numVertices - 1, maze->ratVertex);
 
-            maze->vertices[maze->ratVertex]->left = maze->vertices[verify];
-            maze->vertices[verify]->right = maze->vertices[maze->ratVertex];
-            maze->ratVertex = verify;
-            return result;
-        }
-        else
-        {
+        maze->vertices[maze->ratVertex]->left = maze->vertices[maze->numVertices - 1];
+        maze->vertices[maze->numVertices - 1]->right = maze->vertices[maze->ratVertex];
 
-            addVertex(maze);
-
-            addEdge(maze, maze->ratVertex, maze->numVertices - 1);
-            addEdge(maze, maze->numVertices - 1, maze->ratVertex);
-
-            maze->vertices[maze->ratVertex]->left = maze->vertices[maze->numVertices - 1];
-            maze->vertices[maze->numVertices - 1]->right = maze->vertices[maze->ratVertex];
-
-            maze->ratVertex = maze->numVertices - 1;
-        }
+        maze->ratVertex = maze->numVertices - 1;
 
         printf("QUEIJO VAIDO\n");
 
@@ -448,280 +390,267 @@ int rotateRight(Graph *maze)
 {
     int result;
 
+    printGraph(maze);
+
     printf("r");
     scanf("%d", &result);
 
     maze->numRotations++;
-
-    printGraph(maze);
 }
 
-int initiateMove(Graph* maze){
+int initiateMove(Graph *maze)
+{
     int enter = 0, result = 0;
     int rotations = maze->numRotations % 4;
 
     switch (rotations)
     {
 
-        case 0:
+    case 0:
 
+        printf("Tentando andar pra frente\n");
+        printf("w");
+        scanf("%d", &result);
 
-
-            printf("Tentando andar pra frente\n");
-            printf("w");
-            scanf("%d", &result);
-
-            switch (result)
-            {
-            case 1:
-
-                addVertex(maze);
-
-                addEdge(maze, maze->ratVertex, maze->numVertices - 1);
-                addEdge(maze, maze->numVertices - 1, maze->ratVertex);
-
-                maze->vertices[maze->ratVertex]->forward = maze->vertices[maze->numVertices - 1];
-                maze->vertices[maze->numVertices - 1]->behind = maze->vertices[maze->ratVertex];
-
-                maze->ratVertex = maze->numVertices - 1;
-
-                enter = 2;
-                return enter;
-
-                break;
-
-            case 2:
-
-                addVertex(maze);
-
-                addEdge(maze, maze->ratVertex, maze->numVertices - 1);
-                addEdge(maze, maze->numVertices - 1, maze->ratVertex);
-
-                maze->vertices[maze->ratVertex]->forward = maze->vertices[maze->numVertices - 1];
-                maze->vertices[maze->numVertices - 1]->behind = maze->vertices[maze->ratVertex];
-
-                maze->ratVertex = maze->numVertices - 1;
-                
-                enter = 4;
-                return enter;
-
-                printf("QUEIJO VAIDO\n");
-
-                break;
-
-            default:
-                result = 0;
-                break;
-            }
-
-            if (result == 0)
-            {
-                result = rotateRight(maze);
-                rotations = maze->numRotations;
-                rotations = rotations % 4;
-            }
-
-            printGraph(maze);
-            printf("ROTATIONS: %d / 4 = %d\n ", maze->numRotations, rotations);
-
-            break;
-
-
-
+        switch (result)
+        {
         case 1:
 
-            printf("Tentativa de andar para direita\n");
+            addVertex(maze);
 
+            addEdge(maze, maze->ratVertex, maze->numVertices - 1);
+            addEdge(maze, maze->numVertices - 1, maze->ratVertex);
 
+            maze->vertices[maze->ratVertex]->forward = maze->vertices[maze->numVertices - 1];
+            maze->vertices[maze->numVertices - 1]->behind = maze->vertices[maze->ratVertex];
 
-            printf("w");
-            scanf("%d", &result);
+            maze->ratVertex = maze->numVertices - 1;
 
-            switch (result)
-            {
-            case 1:
-
-                addVertex(maze);
-
-                addEdge(maze, maze->ratVertex, maze->numVertices - 1);
-                addEdge(maze, maze->numVertices - 1, maze->ratVertex);
-
-                maze->vertices[maze->ratVertex]->right = maze->vertices[maze->numVertices - 1];
-                maze->vertices[maze->numVertices - 1]->left = maze->vertices[maze->ratVertex];
-
-                maze->ratVertex = maze->numVertices - 1;
-
-                enter = 2;
-                return enter;
-                break;
-
-            case 2:
-
-                addVertex(maze);
-
-                addEdge(maze, maze->ratVertex, maze->numVertices - 1);
-                addEdge(maze, maze->numVertices - 1, maze->ratVertex);
-
-                maze->vertices[maze->ratVertex]->right = maze->vertices[maze->numVertices - 1];
-                maze->vertices[maze->numVertices - 1]->left = maze->vertices[maze->ratVertex];
-
-                maze->ratVertex = maze->numVertices - 1;
-
-                enter = 4;
-                return enter;
-                printf("QUEIJO VAIDO\n");
-
-                break;
-
-            default:
-                result = 0;
-                break;
-            }
-
-            if (result == 0)
-            {
-                result = rotateRight(maze);
-                rotations = maze->numRotations;
-                rotations = rotations % 4;
-            }
-
-            printGraph(maze);
-            printf("ROTATIONS: %d % 4 = %d\n ", maze->numRotations, rotations);
+            enter = 2;
+            verifyCicle(maze, 'F');
+            return enter;
 
             break;
-
-
-
 
         case 2:
 
-            printf("Chamou a função onwardBehind!\n");
-            
+            addVertex(maze);
 
+            addEdge(maze, maze->ratVertex, maze->numVertices - 1);
+            addEdge(maze, maze->numVertices - 1, maze->ratVertex);
 
-            printf("w");
-            scanf("%d", &result);
+            maze->vertices[maze->ratVertex]->forward = maze->vertices[maze->numVertices - 1];
+            maze->vertices[maze->numVertices - 1]->behind = maze->vertices[maze->ratVertex];
 
-            switch (result)
-            {
-            case 1:
+            maze->ratVertex = maze->numVertices - 1;
 
-                addVertex(maze);
+            enter = 4;
+            return enter;
 
-                addEdge(maze, maze->ratVertex, maze->numVertices - 1);
-                addEdge(maze, maze->numVertices - 1, maze->ratVertex);
-
-                maze->vertices[maze->ratVertex]->behind = maze->vertices[maze->numVertices - 1];
-                maze->vertices[maze->numVertices - 1]->forward = maze->vertices[maze->ratVertex];
-
-                maze->ratVertex = maze->numVertices - 1;
-
-                enter = 2;
-                return enter;
-                break;
-
-            case 2:
-
-                addVertex(maze);
-
-                addEdge(maze, maze->ratVertex, maze->numVertices - 1);
-                addEdge(maze, maze->numVertices - 1, maze->ratVertex);
-
-                maze->vertices[maze->ratVertex]->behind = maze->vertices[maze->numVertices - 1];
-                maze->vertices[maze->numVertices - 1]->forward = maze->vertices[maze->ratVertex];
-
-                maze->ratVertex = maze->numVertices - 1;
-
-                enter = 4;
-                return enter;
-                printf("QUEIJO VAIDO\n");
-
-                break;
-
-            default:
-                result = 0;
-                break;
-            }
-
-
-
-            if (result == 0)
-            {
-                result = rotateRight(maze);
-                rotations = maze->numRotations;
-                rotations = rotations % 4;
-            }
-
-            printGraph(maze);
-            printf("ROTATIONS: %d % 4 = %d\n ", maze->numRotations, rotations);
+            printf("QUEIJO VAIDO\n");
 
             break;
 
-        case 3:
+        default:
+            result = 0;
+            break;
+        }
 
-            printf("Chamou a função onwardLeft!\n");
+        if (result == 0)
+        {
+            result = rotateRight(maze);
+            rotations = maze->numRotations;
+            rotations = rotations % 4;
+        }
 
+        printGraph(maze);
+        printf("ROTATIONS: %d / 4 = %d\n ", maze->numRotations, rotations);
 
+        break;
 
-            printf("w");
-            scanf("%d", &result);
+    case 1:
 
-            switch (result)
-            {
-            case 1:
+        printf("Tentativa de andar para direita\n");
 
-                addVertex(maze);
+        printf("w");
+        scanf("%d", &result);
 
-                addEdge(maze, maze->ratVertex, maze->numVertices - 1);
-                addEdge(maze, maze->numVertices - 1, maze->ratVertex);
+        switch (result)
+        {
+        case 1:
 
-                maze->vertices[maze->ratVertex]->left = maze->vertices[maze->numVertices - 1];
-                maze->vertices[maze->numVertices - 1]->right = maze->vertices[maze->ratVertex];
+            addVertex(maze);
 
-                maze->ratVertex = maze->numVertices - 1;
+            addEdge(maze, maze->ratVertex, maze->numVertices - 1);
+            addEdge(maze, maze->numVertices - 1, maze->ratVertex);
 
-                enter = 2;
-                return enter;
-                break;
+            maze->vertices[maze->ratVertex]->right = maze->vertices[maze->numVertices - 1];
+            maze->vertices[maze->numVertices - 1]->left = maze->vertices[maze->ratVertex];
 
-            case 2:
+            maze->ratVertex = maze->numVertices - 1;
 
-                addVertex(maze);
+            enter = 2;
+            verifyCicle(maze, 'R');
+            return enter;
+            break;
 
-                addEdge(maze, maze->ratVertex, maze->numVertices - 1);
-                addEdge(maze, maze->numVertices - 1, maze->ratVertex);
+        case 2:
 
-                maze->vertices[maze->ratVertex]->left = maze->vertices[maze->numVertices - 1];
-                maze->vertices[maze->numVertices - 1]->right = maze->vertices[maze->ratVertex];
+            addVertex(maze);
 
-                maze->ratVertex = maze->numVertices - 1;
+            addEdge(maze, maze->ratVertex, maze->numVertices - 1);
+            addEdge(maze, maze->numVertices - 1, maze->ratVertex);
 
-                enter = 4;
-                return enter;
-                printf("QUEIJO VAIDO\n");
+            maze->vertices[maze->ratVertex]->right = maze->vertices[maze->numVertices - 1];
+            maze->vertices[maze->numVertices - 1]->left = maze->vertices[maze->ratVertex];
 
-                break;
+            maze->ratVertex = maze->numVertices - 1;
 
-            default:
-                result = 0;
-                break;
-            }
-
-
-
-            if (result == 0)
-            {
-                result = rotateRight(maze);
-                rotations = maze->numRotations;
-                rotations = rotations % 4;
-            }
-
-            printGraph(maze);
-            printf("ROTATIONS: %d % 4 = %d\n ", maze->numRotations, rotations);
+            enter = 4;
+            return enter;
+            printf("QUEIJO VAIDO\n");
 
             break;
+
+        default:
+            result = 0;
+            break;
+        }
+
+        if (result == 0)
+        {
+            result = rotateRight(maze);
+            rotations = maze->numRotations;
+            rotations = rotations % 4;
+        }
+
+        printGraph(maze);
+        printf("ROTATIONS: %d % 4 = %d\n ", maze->numRotations, rotations);
+
+        break;
+
+    case 2:
+
+        printf("Tentativa de andar para traz\n");
+
+        printf("w");
+        scanf("%d", &result);
+
+        switch (result)
+        {
+        case 1:
+
+            addVertex(maze);
+
+            addEdge(maze, maze->ratVertex, maze->numVertices - 1);
+            addEdge(maze, maze->numVertices - 1, maze->ratVertex);
+
+            maze->vertices[maze->ratVertex]->behind = maze->vertices[maze->numVertices - 1];
+            maze->vertices[maze->numVertices - 1]->forward = maze->vertices[maze->ratVertex];
+
+            maze->ratVertex = maze->numVertices - 1;
+
+            enter = 2;
+            verifyCicle(maze, 'B');
+            return enter;
+            break;
+
+        case 2:
+
+            addVertex(maze);
+
+            addEdge(maze, maze->ratVertex, maze->numVertices - 1);
+            addEdge(maze, maze->numVertices - 1, maze->ratVertex);
+
+            maze->vertices[maze->ratVertex]->behind = maze->vertices[maze->numVertices - 1];
+            maze->vertices[maze->numVertices - 1]->forward = maze->vertices[maze->ratVertex];
+
+            maze->ratVertex = maze->numVertices - 1;
+
+            enter = 4;
+            return enter;
+            printf("QUEIJO VAIDO\n");
+
+            break;
+
+        default:
+            result = 0;
+            break;
+        }
+
+        if (result == 0)
+        {
+            result = rotateRight(maze);
+            rotations = maze->numRotations;
+            rotations = rotations % 4;
+        }
+
+        printGraph(maze);
+        printf("ROTATIONS: %d % 4 = %d\n ", maze->numRotations, rotations);
+
+        break;
+
+    case 3:
+
+        printf("Tentativa de ir para esquerda\n");
+
+        printf("w");
+        scanf("%d", &result);
+
+        switch (result)
+        {
+        case 1:
+
+            addVertex(maze);
+
+            addEdge(maze, maze->ratVertex, maze->numVertices - 1);
+            addEdge(maze, maze->numVertices - 1, maze->ratVertex);
+
+            maze->vertices[maze->ratVertex]->left = maze->vertices[maze->numVertices - 1];
+            maze->vertices[maze->numVertices - 1]->right = maze->vertices[maze->ratVertex];
+
+            maze->ratVertex = maze->numVertices - 1;
+
+            enter = 2;
+            verifyCicle(maze, 'L');
+            return enter;
+            break;
+
+        case 2:
+
+            addVertex(maze);
+
+            addEdge(maze, maze->ratVertex, maze->numVertices - 1);
+            addEdge(maze, maze->numVertices - 1, maze->ratVertex);
+
+            maze->vertices[maze->ratVertex]->left = maze->vertices[maze->numVertices - 1];
+            maze->vertices[maze->numVertices - 1]->right = maze->vertices[maze->ratVertex];
+
+            maze->ratVertex = maze->numVertices - 1;
+
+            enter = 4;
+            return enter;
+            printf("QUEIJO VAIDO\n");
+
+            break;
+
+        default:
+            result = 0;
+            break;
+        }
+
+        if (result == 0)
+        {
+            result = rotateRight(maze);
+            rotations = maze->numRotations;
+            rotations = rotations % 4;
+        }
+
+        printGraph(maze);
+        printf("ROTATIONS: %d % 4 = %d\n ", maze->numRotations, rotations);
+
+        break;
     }
-
 }
 
 // ---- FIM DAS FUNÇÕES DE MOVIMENTAÇÃO DO RATO ----
@@ -732,14 +661,17 @@ int main()
     Graph *maze = createGraph();
     addVertex(maze);
 
-    while (enter != 2)
+    while (enter != 2 && enter != 4)
     {
 
         enter = initiateMove(maze);
         printGraph(maze);
     }
 
-    if(enter == 4){result = 2;}
+    if (enter == 4)
+    {
+        result = 2;
+    }
 
     while (result != 2)
     {
